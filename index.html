@@ -198,6 +198,7 @@
     </div>
   </div>
   <button class="save-btn" onclick="saveData()">💾 Sauvegarder</button>
+  <button class="save-btn" style="margin-left:8px;background:var(--blue);color:#fff" onclick="exportPDF()">📄 PDF</button>
 </header>
 
 <div class="tabs">
@@ -210,6 +211,8 @@
 
 <div class="toast" id="toast">✅ Pronostic sauvegardé</div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 // ══════════════════════════════════════════
 // DONNÉES
@@ -230,28 +233,41 @@ const POULES = {
   L: ['Angleterre','Croatie','Ghana','Panama'],
 };
 
-// Structure du bracket 16es (côté gauche / droite)
+// Structure officielle du bracket 16es (conforme au tableau FIFA / fichier Excel)
 // a = slot équipe A, b = slot équipe B
-// Les slots: "1X"=1er poule X, "2X"=2e poule X, "3X"=3e qualifié (index 0..7 dans selectedThirds)
+// Les slots: "1X"=1er poule X, "2X"=2e poule X, "S1".."S8"=slot de 3e qualifié (cf THIRD_SLOTS_DEF)
 const BRACKET_16 = [
   // GAUCHE (rounds lus de gauche vers la finale)
-  {id:'M74', a:'1E', b:'3L', info:'29 juin · Gillette, Boston'},
-  {id:'M77', a:'1I', b:'3R', info:'30 juin · MetLife, NY'},
-  {id:'M73', a:'2A', b:'2B', info:'28 juin · SoFi, LA'},
-  {id:'M75', a:'1F', b:'2C', info:'30 juin · BBVA, Monterrey'},
-  {id:'M83', a:'2K', b:'2L', info:'3 juil · BMO, Toronto'},
-  {id:'M84', a:'1H', b:'2J', info:'2 juil · SoFi, LA'},
-  {id:'M81', a:'1D', b:'3M', info:'2 juil · Levi\'s, SF'},
-  {id:'M82', a:'1G', b:'3N', info:'1 juil · Lumen, Seattle'},
+  {id:'M74', a:'1E', b:'S1', info:'29 juin 22:30 · Gillette Stadium, Boston'},
+  {id:'M77', a:'1I', b:'S2', info:'30 juin 23:00 · MetLife, New York/NJ'},
+  {id:'M73', a:'2A', b:'2B', info:'28 juin 21:00 · SoFi Stadium, Los Angeles'},
+  {id:'M75', a:'1F', b:'2C', info:'30 juin 03:00 · Estadio BBVA, Monterrey'},
+  {id:'M83', a:'2K', b:'2L', info:'3 juil 01:00 · BMO Field, Toronto'},
+  {id:'M84', a:'1H', b:'2J', info:'2 juil 21:00 · SoFi Stadium, Los Angeles'},
+  {id:'M81', a:'1D', b:'S5', info:'2 juil 02:00 · Levi\'s Stadium, San Francisco'},
+  {id:'M82', a:'1G', b:'S6', info:'1 juil 22:00 · Lumen Field, Seattle'},
   // DROITE
-  {id:'M76', a:'1C', b:'2F', info:'29 juin · NRG, Houston'},
-  {id:'M78', a:'2E', b:'2I', info:'30 juin · AT&T, Dallas'},
-  {id:'M79', a:'1A', b:'3O', info:'1 juil · Azteca, MX'},
-  {id:'M80', a:'1L', b:'3P', info:'1 juil · Mercedes, ATL'},
-  {id:'M86', a:'2D', b:'2G', info:'4 juil · Hard Rock, Miami'},
-  {id:'M88', a:'2H', b:'3Q', info:'3 juil · AT&T, Dallas'},
-  {id:'M85', a:'1B', b:'3S', info:'3 juil · BC Place, Van'},
-  {id:'M87', a:'1K', b:'3T', info:'4 juil · Arrowhead, KC'},
+  {id:'M76', a:'1C', b:'2F', info:'29 juin 19:00 · NRG Stadium, Houston'},
+  {id:'M78', a:'2E', b:'2I', info:'30 juin 19:00 · AT&T Stadium, Dallas'},
+  {id:'M79', a:'1A', b:'S3', info:'1 juil 03:00 · Estadio Azteca, Mexico City'},
+  {id:'M80', a:'1L', b:'S4', info:'1 juil 18:00 · Mercedes-Benz Stadium, Atlanta'},
+  {id:'M86', a:'1J', b:'2H', info:'4 juil 00:00 · Hard Rock Stadium, Miami'},
+  {id:'M88', a:'2D', b:'2G', info:'3 juil 20:00 · AT&T Stadium, Dallas'},
+  {id:'M85', a:'1B', b:'S7', info:'3 juil 05:00 · BC Place, Vancouver'},
+  {id:'M87', a:'1K', b:'S8', info:'4 juil 03:30 · Arrowhead Stadium, Kansas City'},
+];
+
+// Définition officielle des 8 slots de "meilleurs 3es" et des groupes éligibles pour chacun
+// (correspond aux colonnes A/B de l'onglet "Phase finale" du fichier Excel)
+const THIRD_SLOTS_DEF = [
+  {key:'S1', label:'3ABCDF', groups:['A','B','C','D','F']},
+  {key:'S2', label:'3CDFGH', groups:['C','D','F','G','H']},
+  {key:'S3', label:'3CEFHI', groups:['C','E','F','H','I']},
+  {key:'S4', label:'3EHIJK', groups:['E','H','I','J','K']},
+  {key:'S5', label:'3BEFIJ', groups:['B','E','F','I','J']},
+  {key:'S6', label:'3AEHIJ', groups:['A','E','H','I','J']},
+  {key:'S7', label:'3EFGIJ', groups:['E','F','G','I','J']},
+  {key:'S8', label:'3DEIJL', groups:['D','E','I','J','L']},
 ];
 
 const ROUNDS_BRACKET = [
@@ -272,25 +288,27 @@ const ROUNDS_BRACKET = [
 
 // pronostic[poule] = {rank1: 'Équipe', rank2: 'Équipe', rank3: 'Équipe'}
 let pronostic = {};
-// selectedThirds = array of up to 8 group keys whose 3rd qualifies
-let selectedThirds = [];
+// thirdRanking = liste ordonnée (du meilleur au moins bon) des poules dont le 3e est qualifiable
+let thirdRanking = [];
+// thirdAssign[slotKey] = lettre de poule, calculé automatiquement à partir de thirdRanking
+let thirdAssign = {};
 // bracketWinners[matchId] = 'a' ou 'b'
 let bracketWinners = {};
 
 function loadData() {
   try {
     const p = localStorage.getItem('wc2026_prono');
-    const t = localStorage.getItem('wc2026_thirds');
+    const t = localStorage.getItem('wc2026_thirdranking');
     const b = localStorage.getItem('wc2026_bwins');
     if (p) pronostic = JSON.parse(p);
-    if (t) selectedThirds = JSON.parse(t);
+    if (t) thirdRanking = JSON.parse(t);
     if (b) bracketWinners = JSON.parse(b);
   } catch(e) {}
 }
 
 function saveData() {
   localStorage.setItem('wc2026_prono', JSON.stringify(pronostic));
-  localStorage.setItem('wc2026_thirds', JSON.stringify(selectedThirds));
+  localStorage.setItem('wc2026_thirdranking', JSON.stringify(thirdRanking));
   localStorage.setItem('wc2026_bwins', JSON.stringify(bracketWinners));
   const t = document.getElementById('toast');
   t.classList.add('show');
@@ -343,14 +361,13 @@ function pickRank(poule, team, rank) {
   }
 }
 
-function toggleThird(poule) {
-  const idx = selectedThirds.indexOf(poule);
-  if (idx !== -1) {
-    selectedThirds.splice(idx, 1);
-  } else {
-    if (selectedThirds.length >= 8) return; // max 8
-    selectedThirds.push(poule);
-  }
+function moveThird(poule, dir) {
+  const idx = thirdRanking.indexOf(poule);
+  if (idx === -1) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= thirdRanking.length) return;
+  [thirdRanking[idx], thirdRanking[newIdx]] = [thirdRanking[newIdx], thirdRanking[idx]];
+  computeThirdAssign();
   updateThirdSlots();
   bracketWinners = {};
   if (document.getElementById('view-finale').classList.contains('active')) {
@@ -358,19 +375,44 @@ function toggleThird(poule) {
   }
 }
 
+// Attribution automatique des slots S1..S8 selon l'ordre de thirdRanking
+// (algorithme glouton : on tente d'abord d'assigner le slot le moins flexible
+// pour chaque poule, dans l'ordre du classement, afin de garantir une solution
+// valide quelle que soit la combinaison des 8 meilleurs 3es)
+function computeThirdAssign() {
+  thirdAssign = {};
+  const remainingSlots = THIRD_SLOTS_DEF.map(s => s.key);
+  // On ne retient que les 8 premières poules du classement (les "meilleurs 3es")
+  const top8 = thirdRanking.slice(0, 8);
+  const assignedPoules = new Set();
+  for (const pk of top8) {
+    // Slots éligibles pour cette poule, encore libres
+    const eligible = THIRD_SLOTS_DEF.filter(s => remainingSlots.includes(s.key) && s.groups.includes(pk));
+    if (eligible.length === 0) continue; // aucune solution pour cette poule (cas extrême)
+    // Choisir le slot le plus "contraint" : celui qui accepte le moins de poules
+    // restantes du top8 parmi les groupes encore non assignés, pour le préserver
+    let best = eligible[0];
+    let bestCount = Infinity;
+    for (const s of eligible) {
+      const cnt = top8.filter(p2 => p2 !== pk && !assignedPoules.has(p2) && s.groups.includes(p2)).length;
+      if (cnt < bestCount) { bestCount = cnt; best = s; }
+    }
+    thirdAssign[best.key] = pk;
+    assignedPoules.add(pk);
+    remainingSlots.splice(remainingSlots.indexOf(best.key), 1);
+  }
+}
+
 // ══════════════════════════════════════════
 // RÉSOLUTION DES SLOTS BRACKET
 // ══════════════════════════════════════════
 
-// Retourne le nom de l'équipe pour un slot bracket (ex: "1A", "2C", "3L")
-// Les slots 3X (X=L..T) sont fictifs — on résout dans l'ordre des selectedThirds
-const THIRD_SLOTS = ['3L','3M','3N','3O','3P','3Q','3R','3S','3T']; // 8 slots 3es
+// Retourne le nom de l'équipe pour un slot bracket (ex: "1A", "2C", "S1")
 
 function resolveSlot(slot) {
-  // Slots 3es fictifs (3L, 3M, ... 3T) : résoudre via selectedThirds
-  const thirdIdx = THIRD_SLOTS.indexOf(slot);
-  if (thirdIdx !== -1) {
-    const poule = selectedThirds[thirdIdx];
+  // Slots de 3es officiels (S1..S8) : résolus via thirdAssign -> poule -> rank3
+  if (/^S[1-8]$/.test(slot)) {
+    const poule = thirdAssign[slot];
     if (!poule) return null;
     const p = pronostic[poule] || {};
     return p.rank3 || null;
@@ -539,34 +581,53 @@ function updateThirdSlots() {
     return !!p.rank3;
   });
 
-  // Filtrer selectedThirds : garder seulement les poules qui ont encore un 3e désigné
-  selectedThirds = selectedThirds.filter(pk => availableThirds.includes(pk));
-
-  const count = selectedThirds.length;
-  const needed = 8;
-
-  let html = `<div class="thirds-section">
-    <div class="thirds-header">🥉 Meilleurs 3es qualifiés (${count}/${needed})</div>
-    <div class="thirds-body">
-      <div class="thirds-counter">Sélectionne <span>${needed - count > 0 ? needed - count : 0}</span> groupe(s) de plus · ${count}/${needed} sélectionnés</div>
-      <div class="thirds-slots">`;
-
-  if (availableThirds.length === 0) {
-    html += `<span style="color:var(--muted);font-size:12px">Désigne d'abord un 3e dans chaque groupe pour pouvoir le sélectionner ici.</span>`;
-  } else {
-    for (const pk of availableThirds) {
-      const p = pronostic[pk] || {};
-      const team = p.rank3;
-      const isSel = selectedThirds.includes(pk);
-      const isDisabled = !isSel && count >= needed;
-      html += `<div class="third-slot ${isSel?'selected':''} ${isDisabled?'disabled':''}"
-        onclick="toggleThird('${pk}')">
-        <b>Poule ${pk}</b> — ${team}
-      </div>`;
-    }
+  // Nettoyer thirdRanking : retirer les poules qui n'ont plus de 3e, ajouter les nouvelles à la fin
+  thirdRanking = thirdRanking.filter(pk => availableThirds.includes(pk));
+  for (const pk of availableThirds) {
+    if (!thirdRanking.includes(pk)) thirdRanking.push(pk);
   }
 
-  html += `</div></div></div>`;
+  computeThirdAssign();
+  const filled = THIRD_SLOTS_DEF.filter(s => thirdAssign[s.key]).length;
+
+  let html = `<div class="thirds-section">
+    <div class="thirds-header">🥉 Classement des 3es (${availableThirds.length} dispo · ${filled}/8 qualifiés)</div>
+    <div class="thirds-body">
+      <div class="thirds-counter">Classe les 3es du <b>meilleur</b> au <b>moins bon</b> avec les flèches. Les 8 premiers sont qualifiés et placés automatiquement dans le bracket officiel.</div>
+      <div class="thirds-slots" style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px">`;
+
+  if (availableThirds.length === 0) {
+    html += `<span style="color:var(--muted);font-size:12px">Désigne d'abord un 3e dans chaque groupe pour pouvoir le classer ici.</span>`;
+  } else {
+    thirdRanking.forEach((pk, i) => {
+      const team = (pronostic[pk]||{}).rank3;
+      const qualified = i < 8;
+      html += `<div class="third-slot" style="display:flex;align-items:center;gap:8px;${qualified?'':'opacity:0.45'}">
+        <span style="width:22px;text-align:right;font-weight:700;color:${qualified?'var(--gold)':'var(--muted)'}">${i+1}</span>
+        <span style="flex:1">Poule ${pk} — ${team}${qualified?'':' (non qualifié)'}</span>
+        <button onclick="moveThird('${pk}',-1)" ${i===0?'disabled':''} style="background:#0D0D18;color:var(--text);border:1px solid var(--border);border-radius:4px;padding:2px 8px;cursor:pointer">▲</button>
+        <button onclick="moveThird('${pk}',1)" ${i===thirdRanking.length-1?'disabled':''} style="background:#0D0D18;color:var(--text);border:1px solid var(--border);border-radius:4px;padding:2px 8px;cursor:pointer">▼</button>
+      </div>`;
+    });
+  }
+
+  html += `</div>`;
+
+  if (availableThirds.length > 0) {
+    html += `<div class="thirds-header" style="margin-top:6px">📋 Attribution dans le bracket (calculée automatiquement)</div>`;
+    html += `<div class="thirds-slots" style="display:flex;flex-direction:column;gap:4px;margin-top:8px">`;
+    for (const slot of THIRD_SLOTS_DEF) {
+      const pk = thirdAssign[slot.key];
+      const team = pk ? (pronostic[pk]||{}).rank3 : null;
+      html += `<div class="third-slot" style="display:flex;justify-content:space-between;gap:8px">
+        <b>${slot.label}</b>
+        <span style="color:${team?'var(--text)':'var(--muted)'}">${team ? `Poule ${pk} — ${team}` : 'À attribuer'}</span>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  html += `</div></div>`;
   el.innerHTML = html;
 }
 
@@ -666,6 +727,80 @@ function showView(name) {
   const tabs = ['groupes','finale'];
   document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
   if (name === 'finale') renderFinale();
+}
+
+// ══════════════════════════════════════════
+// EXPORT PDF (2 pages : Groupes + Phase Finale)
+// ══════════════════════════════════════════
+
+async function exportPDF() {
+  const toast = document.getElementById('toast');
+  toast.textContent = '⏳ Génération du PDF...';
+  toast.classList.add('show');
+
+  const { jsPDF } = window.jspdf;
+  let pdf = null;
+
+  // Mémoriser la vue active pour la restaurer après
+  const currentActive = document.querySelector('.view.active').id;
+
+  const pages = [
+    { id: 'view-groupes', render: renderGroupes },
+    { id: 'view-finale',  render: renderFinale  },
+  ];
+
+  // Largeur de référence (mm) à laquelle chaque page sera générée,
+  // sa hauteur étant ajustée pour respecter le ratio réel du contenu capturé
+  // (évite que le bracket très large soit écrasé sur une page A4 portrait)
+  const REF_WIDTH_MM = 280;
+
+  for (let i = 0; i < pages.length; i++) {
+    const { id, render } = pages[i];
+
+    // Afficher la vue à capturer
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    render();
+
+    // Laisser le temps au DOM de se mettre à jour
+    await new Promise(r => setTimeout(r, 100));
+
+    const el = document.getElementById(id);
+    const canvas = await html2canvas(el, {
+      backgroundColor: '#0A0A0F',
+      scale: 2,
+      useCORS: true,
+      windowWidth: el.scrollWidth,
+      windowHeight: el.scrollHeight
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const ratio = canvas.width / canvas.height;
+    const pageWmm = REF_WIDTH_MM;
+    const pageHmm = pageWmm / ratio;
+    const orientation = pageWmm >= pageHmm ? 'l' : 'p';
+
+    if (i === 0) {
+      pdf = new jsPDF(orientation, 'mm', [pageWmm, pageHmm]);
+    } else {
+      pdf.addPage([pageWmm, pageHmm], orientation);
+    }
+
+    pdf.addImage(imgData, 'PNG', 0, 0, pageWmm, pageHmm);
+  }
+
+  // Restaurer la vue d'origine
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(currentActive).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const tabs = ['groupes','finale'];
+  document.querySelectorAll('.tab')[tabs.indexOf(currentActive.replace('view-',''))].classList.add('active');
+  if (currentActive === 'view-finale') renderFinale();
+  else renderGroupes();
+
+  pdf.save('pronostic-coupe-du-monde-2026.pdf');
+
+  toast.textContent = '✅ PDF généré !';
 }
 
 // ══════════════════════════════════════════
