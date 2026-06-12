@@ -766,6 +766,20 @@ async function exportPDF() {
     await new Promise(r => setTimeout(r, 100));
 
     const el = document.getElementById(id);
+
+    // Pour la phase finale : le bracket est dans un conteneur à scroll horizontal
+    // (overflow-x:auto). html2canvas ne capture pas le contenu hors du viewport
+    // scrollable, donc on désactive temporairement ce scroll pour capturer le
+    // bracket en entier, en pleine largeur.
+    const bracketContainer = el.querySelector('.bracket-container');
+    let savedOverflow, savedElWidth;
+    if (bracketContainer) {
+      savedOverflow = bracketContainer.style.overflow;
+      savedElWidth = el.style.width;
+      bracketContainer.style.overflow = 'visible';
+      el.style.width = 'max-content';
+    }
+
     const canvas = await html2canvas(el, {
       backgroundColor: '#0A0A0F',
       scale: 2,
@@ -773,6 +787,11 @@ async function exportPDF() {
       windowWidth: el.scrollWidth,
       windowHeight: el.scrollHeight
     });
+
+    if (bracketContainer) {
+      bracketContainer.style.overflow = savedOverflow;
+      el.style.width = savedElWidth;
+    }
 
     const imgData = canvas.toDataURL('image/png');
     const ratio = canvas.width / canvas.height;
