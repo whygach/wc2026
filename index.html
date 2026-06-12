@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pronostic Coupe du Monde 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --red:    #C8102E;
+    --gold:   #F0A500;
+    --dark:   #0A0A0F;
+    --card:   #12121A;
+    --border: #1E1E2E;
+    --text:   #E8E8F0;
+    --muted:  #6B6B80;
+    --green:  #22C55E;
+    --blue:   #3B82F6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--dark); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #0A0A0F 0%, #1a0008 50%, #0A0A0F 100%);
+    border-bottom: 2px solid var(--gold);
+    padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-trophy { font-size: 28px; }
+  .logo-text { display: flex; flex-direction: column; line-height: 1; }
+  .logo-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: var(--gold); }
+  .logo-sub { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .save-btn {
+    background: var(--gold); color: var(--dark); border: none; border-radius: 6px;
+    padding: 8px 16px; font-weight: 700; font-size: 13px; cursor: pointer; letter-spacing: 0.5px; transition: opacity 0.2s;
+  }
+  .save-btn:hover { opacity: 0.85; }
+
+  /* TABS */
+  .tabs {
+    display: flex; background: var(--card); border-bottom: 1px solid var(--border);
+    overflow-x: auto; scrollbar-width: none; position: sticky; top: 65px; z-index: 99;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: 0 0 auto; padding: 14px 20px; font-size: 13px; font-weight: 600;
+    letter-spacing: 0.5px; color: var(--muted); cursor: pointer;
+    border-bottom: 3px solid transparent; white-space: nowrap; transition: color 0.2s, border-color 0.2s;
+  }
+  .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  /* VIEWS */
+  .view { display: none; padding: 16px; }
+  .view.active { display: block; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 3px;
+    color: var(--gold); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* POULES GRID */
+  .poules-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+
+  .poule-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .poule-header {
+    background: linear-gradient(90deg, var(--red), #8B0A1E);
+    padding: 10px 16px; font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px; letter-spacing: 2px; color: #fff;
+  }
+
+  /* TEAM PICK ROWS */
+  .team-pick-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 12px; border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .team-pick-row:last-child { border-bottom: none; }
+  .team-name { font-weight: 600; font-size: 13px; flex: 1; }
+
+  .pick-btns { display: flex; gap: 5px; }
+  .pick-btn {
+    width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--border);
+    background: transparent; color: var(--muted); font-size: 11px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px;
+  }
+  .pick-btn:hover { border-color: var(--text); color: var(--text); }
+  .pick-btn.active-1 { background: var(--gold); border-color: var(--gold); color: var(--dark); }
+  .pick-btn.active-2 { background: #6B7280; border-color: #6B7280; color: #fff; }
+  .pick-btn.active-3 { background: #92400E; border-color: #92400E; color: #fff; }
+
+  /* 3RDS QUALIFIES */
+  .thirds-section {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 24px;
+  }
+  .thirds-header {
+    background: linear-gradient(90deg, #1a1a2e, #16213e);
+    padding: 12px 16px; font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px; letter-spacing: 2px; color: var(--blue);
+  }
+  .thirds-body { padding: 12px 16px; }
+  .thirds-slots {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px;
+  }
+  .third-slot {
+    background: #0D0D18; border: 1.5px solid var(--border); border-radius: 20px;
+    padding: 5px 14px; font-size: 12px; font-weight: 600; color: var(--muted);
+    cursor: pointer; transition: all 0.15s; user-select: none;
+  }
+  .third-slot:hover { border-color: #92400E; color: var(--text); }
+  .third-slot.selected { background: rgba(146,64,14,0.25); border-color: #92400E; color: #D97706; }
+  .third-slot.disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+  .thirds-counter { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .thirds-counter span { color: var(--gold); font-weight: 700; }
+
+  /* BRACKET */
+  .bracket-container { overflow-x: auto; padding-bottom: 16px; }
+  .bracket {
+    display: flex; gap: 4px; min-width: 1500px;
+    align-items: center; justify-content: center;
+  }
+  .round { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 160px; }
+  .round-label {
+    font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 2px;
+    color: var(--muted); margin-bottom: 12px; text-align: center; white-space: nowrap;
+  }
+  .matches-col {
+    display: flex; flex-direction: column; gap: 6px;
+    width: 100%; align-items: center; justify-content: space-around; flex: 1;
+  }
+  .bracket-match {
+    background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+    overflow: hidden; width: 155px; font-size: 11px; transition: border-color 0.2s;
+  }
+  .bracket-match.final-match { width: 175px; border: 2px solid var(--gold); }
+  .bracket-match.third-match { width: 175px; border: 2px solid #92400E; }
+  .bracket-team {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 5px 8px; gap: 4px; min-height: 28px;
+  }
+  .bracket-team:first-of-type { border-bottom: 1px solid var(--border); }
+  .bracket-team-name {
+    flex: 1; font-weight: 600; font-size: 11px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .bracket-team-name.tbd { color: var(--muted); font-style: italic; font-weight: 400; }
+  .bracket-match-info { padding: 2px 8px; background: #0D0D18; color: var(--muted); font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* BRACKET WINNER CLICK */
+  .bracket-team { cursor: pointer; }
+  .bracket-team:hover { background: rgba(255,255,255,0.04); }
+  .bracket-team.winner { background: rgba(240,165,0,0.10); }
+  .bracket-team.winner .bracket-team-name { color: var(--gold); }
+
+  /* CHAMPION BANNER */
+  .champion-banner {
+    background: linear-gradient(135deg, #1a1200, #2a1f00, #1a1200);
+    border: 2px solid var(--gold); border-radius: 12px;
+    text-align: center; padding: 24px; margin-bottom: 20px;
+  }
+  .champion-trophy { font-size: 48px; }
+  .champion-label { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 4px; color: var(--muted); margin-top: 8px; }
+  .champion-name { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--gold); letter-spacing: 3px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 20px; right: 20px; background: var(--green);
+    color: #000; padding: 10px 18px; border-radius: 8px; font-weight: 700;
+    font-size: 13px; z-index: 9999; transform: translateY(60px); opacity: 0;
+    transition: transform 0.3s, opacity 0.3s;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  @media (max-width: 640px) {
+    .poules-grid { grid-template-columns: 1fr; }
+    header { padding: 12px 16px; }
+    .logo-title { font-size: 18px; }
+    .tab { padding: 12px 14px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-trophy">🏆</span>
+    <div class="logo-text">
+      <span class="logo-title">FIFA World Cup 2026</span>
+      <span class="logo-sub">Mode Pronostic</span>
+    </div>
+  </div>
+  <button class="save-btn" onclick="saveData()">💾 Sauvegarder</button>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showView('groupes')">🎯 Groupes</div>
+  <div class="tab" onclick="showView('finale')">🏆 Phase Finale</div>
+</div>
+
+<div id="view-groupes" class="view active"></div>
+<div id="view-finale" class="view"></div>
+
+<div class="toast" id="toast">✅ Pronostic sauvegardé</div>
+
+<script>
+// ══════════════════════════════════════════
+// DONNÉES
+// ══════════════════════════════════════════
+
+const POULES = {
+  A: ['Mexique','Afrique du Sud','Corée du Sud','Tchéquie'],
+  B: ['Canada','Suisse','Qatar','Bosnie-Herzégovine'],
+  C: ['Brésil','Maroc','Écosse','Haïti'],
+  D: ['États-Unis','Paraguay','Australie','Turquie'],
+  E: ['Allemagne','Curaçao',"Côte d'Ivoire",'Équateur'],
+  F: ['Pays-Bas','Tunisie','Suède','Japon'],
+  G: ['Belgique','Égypte','Iran','Nouvelle-Zélande'],
+  H: ['Espagne','Uruguay','Arabie saoudite','Cap-Vert'],
+  I: ['France','Sénégal','Norvège','Irak'],
+  J: ['Argentine','Autriche','Algérie','Jordanie'],
+  K: ['Portugal','Colombie','Ouzbékistan','RD Congo'],
+  L: ['Angleterre','Croatie','Ghana','Panama'],
+};
+
+// Structure du bracket 16es (côté gauche / droite)
+// a = slot équipe A, b = slot équipe B
+// Les slots: "1X"=1er poule X, "2X"=2e poule X, "3X"=3e qualifié (index 0..7 dans selectedThirds)
+const BRACKET_16 = [
+  // GAUCHE (rounds lus de gauche vers la finale)
+  {id:'M74', a:'1E', b:'3L', info:'29 juin · Gillette, Boston'},
+  {id:'M77', a:'1I', b:'3R', info:'30 juin · MetLife, NY'},
+  {id:'M73', a:'2A', b:'2B', info:'28 juin · SoFi, LA'},
+  {id:'M75', a:'1F', b:'2C', info:'30 juin · BBVA, Monterrey'},
+  {id:'M83', a:'2K', b:'2L', info:'3 juil · BMO, Toronto'},
+  {id:'M84', a:'1H', b:'2J', info:'2 juil · SoFi, LA'},
+  {id:'M81', a:'1D', b:'3M', info:'2 juil · Levi\'s, SF'},
+  {id:'M82', a:'1G', b:'3N', info:'1 juil · Lumen, Seattle'},
+  // DROITE
+  {id:'M76', a:'1C', b:'2F', info:'29 juin · NRG, Houston'},
+  {id:'M78', a:'2E', b:'2I', info:'30 juin · AT&T, Dallas'},
+  {id:'M79', a:'1A', b:'3O', info:'1 juil · Azteca, MX'},
+  {id:'M80', a:'1L', b:'3P', info:'1 juil · Mercedes, ATL'},
+  {id:'M86', a:'2D', b:'2G', info:'4 juil · Hard Rock, Miami'},
+  {id:'M88', a:'2H', b:'3Q', info:'3 juil · AT&T, Dallas'},
+  {id:'M85', a:'1B', b:'3S', info:'3 juil · BC Place, Van'},
+  {id:'M87', a:'1K', b:'3T', info:'4 juil · Arrowhead, KC'},
+];
+
+const ROUNDS_BRACKET = [
+  {key:'16',  label:'16es de finale', left:['M74','M77','M73','M75','M83','M84','M81','M82']},
+  {key:'8',   label:'8es de finale',  left:['R89','R90','R93','R94']},
+  {key:'Q',   label:'Quarts',         left:['RQ1','RQ2']},
+  {key:'S',   label:'Demi-finales',   left:['RS1']},
+  {key:'F',   label:'Finale',         center:['FINAL','THIRD']},
+  {key:'S2',  label:'Demi-finales',   right:['RS2']},
+  {key:'Q2',  label:'Quarts',         right:['RQ3','RQ4']},
+  {key:'8b',  label:'8es de finale',  right:['R91','R92','R95','R96']},
+  {key:'16b', label:'16es de finale', right:['M76','M78','M79','M80','M86','M88','M85','M87']},
+];
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+
+// pronostic[poule] = {rank1: 'Équipe', rank2: 'Équipe', rank3: 'Équipe'}
+let pronostic = {};
+// selectedThirds = array of up to 8 group keys whose 3rd qualifies
+let selectedThirds = [];
+// bracketWinners[matchId] = 'a' ou 'b'
+let bracketWinners = {};
+
+function loadData() {
+  try {
+    const p = localStorage.getItem('wc2026_prono');
+    const t = localStorage.getItem('wc2026_thirds');
+    const b = localStorage.getItem('wc2026_bwins');
+    if (p) pronostic = JSON.parse(p);
+    if (t) selectedThirds = JSON.parse(t);
+    if (b) bracketWinners = JSON.parse(b);
+  } catch(e) {}
+}
+
+function saveData() {
+  localStorage.setItem('wc2026_prono', JSON.stringify(pronostic));
+  localStorage.setItem('wc2026_thirds', JSON.stringify(selectedThirds));
+  localStorage.setItem('wc2026_bwins', JSON.stringify(bracketWinners));
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ══════════════════════════════════════════
+// PICK LOGIQUE GROUPES
+// ══════════════════════════════════════════
+
+function pickRankByIdx(poule, idx, rank) {
+  pickRank(poule, POULES[poule][idx], rank);
+}
+function pickRank(poule, team, rank) {
+  if (!pronostic[poule]) pronostic[poule] = {};
+  const p = pronostic[poule];
+
+  // Si l'équipe était déjà dans un autre rang, libérer
+  if (p.rank1 === team && rank !== 1) delete p.rank1;
+  if (p.rank2 === team && rank !== 2) delete p.rank2;
+  if (p.rank3 === team && rank !== 3) delete p.rank3;
+
+  // Si le rang était pris par une autre équipe, libérer
+  if (rank === 1 && p.rank1 && p.rank1 !== team) { /* override */ }
+  if (rank === 2 && p.rank2 && p.rank2 !== team) { /* override */ }
+  if (rank === 3 && p.rank3 && p.rank3 !== team) { /* override */ }
+
+  // Toggle : si déjà sélectionné au même rang, désélectionner
+  if (rank === 1 && p.rank1 === team) { delete p.rank1; }
+  else if (rank === 2 && p.rank2 === team) { delete p.rank2; }
+  else if (rank === 3 && p.rank3 === team) { delete p.rank3; }
+  else {
+    // Retirer l'équipe de tout autre rang dans cette poule
+    if (p.rank1 === team) delete p.rank1;
+    if (p.rank2 === team) delete p.rank2;
+    if (p.rank3 === team) delete p.rank3;
+    if (rank === 1) p.rank1 = team;
+    if (rank === 2) p.rank2 = team;
+    if (rank === 3) p.rank3 = team;
+  }
+
+  // Re-render la poule
+  renderPouleCard(poule);
+  // Mettre à jour les 3es
+  updateThirdSlots();
+  // Reset bracket si nécessaire
+  bracketWinners = {};
+  if (document.getElementById('view-finale').classList.contains('active')) {
+    renderFinale();
+  }
+}
+
+function toggleThird(poule) {
+  const idx = selectedThirds.indexOf(poule);
+  if (idx !== -1) {
+    selectedThirds.splice(idx, 1);
+  } else {
+    if (selectedThirds.length >= 8) return; // max 8
+    selectedThirds.push(poule);
+  }
+  updateThirdSlots();
+  bracketWinners = {};
+  if (document.getElementById('view-finale').classList.contains('active')) {
+    renderFinale();
+  }
+}
+
+// ══════════════════════════════════════════
+// RÉSOLUTION DES SLOTS BRACKET
+// ══════════════════════════════════════════
+
+// Retourne le nom de l'équipe pour un slot bracket (ex: "1A", "2C", "3L")
+// Les slots 3X (X=L..T) sont fictifs — on résout dans l'ordre des selectedThirds
+const THIRD_SLOTS = ['3L','3M','3N','3O','3P','3Q','3R','3S','3T']; // 8 slots 3es
+
+function resolveSlot(slot) {
+  // Slots 3es fictifs (3L, 3M, ... 3T) : résoudre via selectedThirds
+  const thirdIdx = THIRD_SLOTS.indexOf(slot);
+  if (thirdIdx !== -1) {
+    const poule = selectedThirds[thirdIdx];
+    if (!poule) return null;
+    const p = pronostic[poule] || {};
+    return p.rank3 || null;
+  }
+  // Slots vrais 1er/2e de poule (1A, 2B, etc.)
+  if (slot.length === 2) {
+    const rank = parseInt(slot[0]);
+    const poule = slot[1];
+    const p = pronostic[poule] || {};
+    if (rank === 1) return p.rank1 || null;
+    if (rank === 2) return p.rank2 || null;
+  }
+  return null;
+}
+
+// Arbre du bracket — chaque match du bracket (R89...) sait de quels matchs 16es il vient
+const BRACKET_TREE = {
+  // 8es gauche
+  R89: {a:'M74', b:'M77'},
+  R90: {a:'M73', b:'M75'},
+  R93: {a:'M83', b:'M84'},
+  R94: {a:'M81', b:'M82'},
+  // 8es droite
+  R91: {a:'M76', b:'M78'},
+  R92: {a:'M79', b:'M80'},
+  R95: {a:'M86', b:'M88'},
+  R96: {a:'M85', b:'M87'},
+  // Quarts gauche
+  RQ1: {a:'R89', b:'R90'},
+  RQ2: {a:'R93', b:'R94'},
+  // Quarts droite
+  RQ3: {a:'R91', b:'R92'},
+  RQ4: {a:'R95', b:'R96'},
+  // Demies
+  RS1: {a:'RQ1', b:'RQ2'},
+  RS2: {a:'RQ3', b:'RQ4'},
+  // Finale & 3e
+  FINAL: {a:'RS1', b:'RS2'},
+  THIRD: {a:'RS1', b:'RS2', loser:true},
+};
+
+// Retourne {teamA, teamB} pour un match bracket
+function resolveMatch(matchId) {
+  const tree = BRACKET_TREE[matchId];
+  if (!tree) {
+    // Match 16es
+    const m = BRACKET_16.find(x => x.id === matchId);
+    if (!m) return {teamA: null, teamB: null};
+    return {teamA: resolveSlot(m.a), teamB: resolveSlot(m.b)};
+  }
+  // Match arbre
+  if (tree.loser) {
+    // Match pour la 3e place : perdants des demies
+    const aWinner = getWinner(tree.a);
+    const bWinner = getWinner(tree.b);
+    const aLoser  = getLoser(tree.a);
+    const bLoser  = getLoser(tree.b);
+    return {teamA: aLoser, teamB: bLoser};
+  }
+  return {teamA: getWinner(tree.a), teamB: getWinner(tree.b)};
+}
+
+function getWinner(matchId) {
+  const w = bracketWinners[matchId]; // 'a' ou 'b'
+  const {teamA, teamB} = resolveMatch(matchId);
+  if (w === 'a') return teamA;
+  if (w === 'b') return teamB;
+  return null; // pas encore désigné
+}
+
+function getLoser(matchId) {
+  const w = bracketWinners[matchId];
+  const {teamA, teamB} = resolveMatch(matchId);
+  if (w === 'a') return teamB;
+  if (w === 'b') return teamA;
+  return null;
+}
+
+function pickWinner(matchId, side) {
+  // Toggle
+  if (bracketWinners[matchId] === side) {
+    delete bracketWinners[matchId];
+    // Invalider tous les matchs en aval
+    invalidateDownstream(matchId);
+  } else {
+    bracketWinners[matchId] = side;
+    invalidateDownstream(matchId);
+  }
+  renderFinale();
+}
+
+function invalidateDownstream(matchId) {
+  // Chercher tous les matchs de l'arbre qui utilisent matchId comme source
+  for (const [id, tree] of Object.entries(BRACKET_TREE)) {
+    if (tree.a === matchId || tree.b === matchId) {
+      delete bracketWinners[id];
+      invalidateDownstream(id);
+    }
+  }
+}
+
+// ══════════════════════════════════════════
+// RENDER GROUPES
+// ══════════════════════════════════════════
+
+function renderGroupes() {
+  const container = document.getElementById('view-groupes');
+  let html = '<div class="section-title">🎯 Choisir le classement de chaque groupe</div>';
+  html += '<div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:10px 14px;font-size:12px;color:#93C5FD;margin-bottom:20px">';
+  html += '👆 Pour chaque équipe, clique sur <b>1</b>, <b>2</b> ou <b>3</b> pour définir son classement. Ensuite choisis les 8 meilleurs 3es qui se qualifient.';
+  html += '</div>';
+  html += '<div class="poules-grid" id="poules-grid"></div>';
+  html += '<div id="thirds-section"></div>';
+  container.innerHTML = html;
+
+  for (const pk of Object.keys(POULES)) {
+    renderPouleCard(pk);
+  }
+  updateThirdSlots();
+}
+
+function renderPouleCard(pk) {
+  const grid = document.getElementById('poules-grid');
+  const teams = POULES[pk];
+  const p = pronostic[pk] || {};
+
+  let html = `<div class="poule-header">POULE ${pk}</div>`;
+  for (let ti = 0; ti < teams.length; ti++) {
+    const team = teams[ti];
+    const isR1 = p.rank1 === team;
+    const isR2 = p.rank2 === team;
+    const isR3 = p.rank3 === team;
+    let rowBg = '';
+    if (isR1) rowBg = 'background:rgba(240,165,0,0.07);';
+    if (isR2) rowBg = 'background:rgba(107,114,128,0.07);';
+    if (isR3) rowBg = 'background:rgba(146,64,14,0.07);';
+
+    html += `<div class="team-pick-row" style="${rowBg}">
+      <span class="team-name">${team}</span>
+      <div class="pick-btns">
+        <button class="pick-btn ${isR1?'active-1':''}" onclick="pickRankByIdx('${pk}',${ti},1)" title="1er">1</button>
+        <button class="pick-btn ${isR2?'active-2':''}" onclick="pickRankByIdx('${pk}',${ti},2)" title="2e">2</button>
+        <button class="pick-btn ${isR3?'active-3':''}" onclick="pickRankByIdx('${pk}',${ti},3)" title="3e">3</button>
+      </div>
+    </div>`;
+  }
+
+  // Chercher ou créer la carte
+  let card = document.getElementById(`poule-card-${pk}`);
+  if (!card) {
+    card = document.createElement('div');
+    card.className = 'poule-card';
+    card.id = `poule-card-${pk}`;
+    grid.appendChild(card);
+  }
+  card.innerHTML = html;
+}
+
+function updateThirdSlots() {
+  const el = document.getElementById('thirds-section');
+  if (!el) return;
+
+  // Lister les poules qui ont un 3e désigné
+  const availableThirds = Object.keys(POULES).filter(pk => {
+    const p = pronostic[pk] || {};
+    return !!p.rank3;
+  });
+
+  // Filtrer selectedThirds : garder seulement les poules qui ont encore un 3e désigné
+  selectedThirds = selectedThirds.filter(pk => availableThirds.includes(pk));
+
+  const count = selectedThirds.length;
+  const needed = 8;
+
+  let html = `<div class="thirds-section">
+    <div class="thirds-header">🥉 Meilleurs 3es qualifiés (${count}/${needed})</div>
+    <div class="thirds-body">
+      <div class="thirds-counter">Sélectionne <span>${needed - count > 0 ? needed - count : 0}</span> groupe(s) de plus · ${count}/${needed} sélectionnés</div>
+      <div class="thirds-slots">`;
+
+  if (availableThirds.length === 0) {
+    html += `<span style="color:var(--muted);font-size:12px">Désigne d'abord un 3e dans chaque groupe pour pouvoir le sélectionner ici.</span>`;
+  } else {
+    for (const pk of availableThirds) {
+      const p = pronostic[pk] || {};
+      const team = p.rank3;
+      const isSel = selectedThirds.includes(pk);
+      const isDisabled = !isSel && count >= needed;
+      html += `<div class="third-slot ${isSel?'selected':''} ${isDisabled?'disabled':''}"
+        onclick="toggleThird('${pk}')">
+        <b>Poule ${pk}</b> — ${team}
+      </div>`;
+    }
+  }
+
+  html += `</div></div></div>`;
+  el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════
+// RENDER PHASE FINALE
+// ══════════════════════════════════════════
+
+function renderFinale() {
+  const container = document.getElementById('view-finale');
+
+  // Champion
+  const champion = getWinner('FINAL');
+  let html = '<div class="section-title">🏆 Phase Finale</div>';
+
+  if (champion) {
+    html += `<div class="champion-banner">
+      <div class="champion-trophy">🏆</div>
+      <div class="champion-label">Champion du Monde 2026</div>
+      <div class="champion-name">${champion}</div>
+    </div>`;
+  }
+
+  html += '<div class="bracket-container"><div class="bracket">';
+
+  const allRounds = [
+    {label:'16es de finale', ids:['M74','M77','M73','M75','M83','M84','M81','M82']},
+    {label:'8es de finale',  ids:['R89','R90','R93','R94']},
+    {label:'Quarts',         ids:['RQ1','RQ2']},
+    {label:'Demi-finales',   ids:['RS1']},
+    {label:'Finale',         ids:['FINAL','THIRD'], isCenter:true},
+    {label:'Demi-finales',   ids:['RS2']},
+    {label:'Quarts',         ids:['RQ3','RQ4']},
+    {label:'8es de finale',  ids:['R91','R92','R95','R96']},
+    {label:'16es de finale', ids:['M76','M78','M79','M80','M86','M88','M85','M87']},
+  ];
+
+  for (const round of allRounds) {
+    html += `<div class="round"><div class="round-label">${round.label}</div><div class="matches-col">`;
+    for (const mid of round.ids) {
+      const {teamA, teamB} = resolveMatch(mid);
+      const w = bracketWinners[mid];
+      const isFinal = mid === 'FINAL';
+      const isThird = mid === 'THIRD';
+
+      const nameA = teamA || '?';
+      const nameB = teamB || '?';
+      const tbdA = !teamA;
+      const tbdB = !teamB;
+
+      if (isThird) {
+        html += `<div style="font-size:10px;letter-spacing:2px;color:var(--muted);text-align:center;margin-top:10px;font-family:'Bebas Neue',sans-serif">🥉 3e Place</div>`;
+      }
+
+      html += `<div class="bracket-match${isFinal?' final-match':''}${isThird?' third-match':''}">
+        <div class="bracket-match-info">${mid} · ${getMatchInfo(mid)}</div>
+        <div class="bracket-team ${w==='a'?'winner':''}" onclick="if('${nameA}'!=='?') pickWinner('${mid}','a')">
+          <span class="bracket-team-name ${tbdA?'tbd':''}">${nameA}</span>
+        </div>
+        <div class="bracket-team ${w==='b'?'winner':''}" onclick="if('${nameB}'!=='?') pickWinner('${mid}','b')">
+          <span class="bracket-team-name ${tbdB?'tbd':''}">${nameB}</span>
+        </div>
+      </div>`;
+    }
+    html += '</div></div>';
+  }
+
+  html += '</div></div>';
+  container.innerHTML = html;
+}
+
+function getMatchInfo(mid) {
+  const m16 = BRACKET_16.find(x => x.id === mid);
+  if (m16) return m16.info;
+  const infos = {
+    R89:'4 juil · Lincoln, PHL', R90:'4 juil · NRG, Houston',
+    R93:'6 juil · AT&T, Dallas', R94:'7 juil · Lumen, Seattle',
+    R91:'5 juil · MetLife, NY',  R92:'6 juil · Azteca, MX',
+    R95:'7 juil · Mercedes, ATL',R96:'7 juil · BC Place, Van',
+    RQ1:'10 juil · Gillette, Boston', RQ2:'11 juil · SoFi, LA',
+    RQ3:'12 juil · Hard Rock, Miami', RQ4:'12 juil · Arrowhead, KC',
+    RS1:'15 juil · AT&T, Dallas', RS2:'16 juil · Mercedes, ATL',
+    FINAL:'19 juil · MetLife, NY/NJ', THIRD:'19 juil · Hard Rock, Miami',
+  };
+  return infos[mid] || '';
+}
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+
+let renderedViews = {};
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`view-${name}`).classList.add('active');
+  const tabs = ['groupes','finale'];
+  document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
+  if (name === 'finale') renderFinale();
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+
+loadData();
+renderGroupes();
+</script>
+</body>
+</html>
